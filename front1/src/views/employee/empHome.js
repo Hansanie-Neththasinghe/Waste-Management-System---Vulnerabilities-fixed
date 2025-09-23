@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Typography, Card, CardContent, CardActions, Button, Grid, Dialog, DialogTitle, DialogContent, DialogActions, Box } from '@mui/material';
-import axios from 'axios';
+import apiClient from '../../utils/apiClient';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Header, Footer } from '../../components/header';
@@ -38,7 +38,7 @@ const EmployeeHome = () => {
     const fetchJobs = async () => {
       if (employee && employee._id) {
         try {
-          const response = await axios.get(`http://localhost:2025/api/job`);
+          const response = await apiClient.get(`/job`);
           const assignedJobs = response.data.jobs.filter(job => job.employee === employee._id && job.status !== 'Complete');
           setJobs(assignedJobs.sort((a, b) => new Date(b.date) - new Date(a.date))); // Sort jobs by date (most recent first)
         } catch (error) {
@@ -48,13 +48,14 @@ const EmployeeHome = () => {
       }
     };
     fetchJobs();
-  }, [employee]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [employee?._id]); // Only depend on the employee ID, not the entire object
 
   // Open dialog and fetch waste bins for the selected job's resident
   const handleJobClick = async (job) => {
     try {
       setSelectedJob(job);
-      const response = await axios.get(`http://localhost:2025/api/wastebin/${job.residentID}`);
+      const response = await apiClient.get(`/wastebin/${job.residentID}`);
       setWasteBins(response.data.wasteBins);
       setOpenDialog(true);
     } catch (error) {
@@ -79,21 +80,21 @@ const EmployeeHome = () => {
       const pointsToAdd = Math.floor(totalPlasticWeight / 10);
   
       // Update the job status to "Complete"
-      await axios.put(`http://localhost:2025/api/job/${selectedJob._id}`, { status: 'Complete' });
+      await apiClient.put(`/job/${selectedJob._id}`, { status: 'Complete' });
   
       // Reset the current weight of all waste bins
       const updatedBins = wasteBins.map(async (bin) => {
-        return await axios.put(`http://localhost:2025/api/wastebin/weight/${bin.binID}/`, { newWeight: 0 });
+        return await apiClient.put(`/wastebin/weight/${bin.binID}/`, { newWeight: 0 });
       });
       await Promise.all(updatedBins);
   
       // Update the resident's total points if plastic was collected
       if (pointsToAdd > 0) {
-        const residentResponse = await axios.get(`http://localhost:2025/api/resident/${selectedJob.resident}`);
+        const residentResponse = await apiClient.get(`/resident/${selectedJob.resident}`);
         const updatedPoints = residentResponse.data.totalPoints + pointsToAdd;
   
         // Update the resident's points in the backend
-        await axios.put(`http://localhost:2025/api/resident/${residentResponse.data._id}`, {
+        await apiClient.put(`/resident/${residentResponse.data._id}`, {
           totalPoints: updatedPoints,
         });
   

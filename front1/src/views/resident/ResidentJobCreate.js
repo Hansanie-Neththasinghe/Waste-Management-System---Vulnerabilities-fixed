@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Container, Box, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import axios from 'axios';
+import apiClient from '../../utils/apiClient';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Header, Footer } from '../../components/header';
@@ -28,16 +28,16 @@ const ResidentJobCreate = () => {
     if (resident && resident._id) {
       const fetchJobs = async () => {
         try {
-          const response = await axios.get(`http://localhost:2025/api/job/`);
-          const residentJobs = response.data.jobs.filter(job => job.resident === resident.username);
-          setJobs(residentJobs);
+          const response = await apiClient.get(`/job/`);
+          // Backend now filters jobs by user role, so we can use all returned jobs
+          setJobs(response.data.jobs);
         } catch (error) {
           console.error('Error fetching jobs:', error);
         }
       };
       fetchJobs();
     }
-  }, [resident]);
+  }, [resident?._id]); // Only re-run when resident ID changes, not the entire object
 
   // Open dialog to view or create a job for the selected date
   const handleOpenDialog = (date) => {
@@ -65,7 +65,7 @@ const ResidentJobCreate = () => {
         date: selectedDate,
         status: 'Incomplete',
       };
-      await axios.post('http://localhost:2025/api/job/create', newJob);
+      await apiClient.post('/job/create', newJob);
       toast.success('Job created successfully!');
       setJobs([...jobs, newJob]); // Update jobs state to include the new job
       handleCloseDialog(); // Close the dialog after successful creation
@@ -79,7 +79,7 @@ const ResidentJobCreate = () => {
   const handleDeleteJob = async () => {
     if (currentJob) {
       try {
-        await axios.delete(`http://localhost:2025/api/job/${currentJob._id}`);
+        await apiClient.delete(`/job/${currentJob._id}`);
         toast.success('Job deleted successfully!');
         setJobs(jobs.filter(job => job._id !== currentJob._id)); // Remove the job from the state
         handleCloseDialog();

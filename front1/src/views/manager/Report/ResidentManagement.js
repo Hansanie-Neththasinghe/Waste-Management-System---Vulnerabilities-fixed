@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
-import axios from 'axios';
+import apiClient from '../../../utils/apiClient';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -15,7 +15,7 @@ const ResidentManagement = () => {
   useEffect(() => {
     const fetchResidents = async () => {
       try {
-        const response = await axios.get('http://localhost:2025/api/resident');
+        const response = await apiClient.get('/resident');
         setResidents(response.data); // Residents already contain wastebins
       } catch (error) {
         console.error('Error fetching residents:', error);
@@ -30,7 +30,7 @@ const ResidentManagement = () => {
   const handleDeleteResident = async (residentId) => {
     if (window.confirm('Are you sure you want to delete this resident?')) {
       try {
-        await axios.delete(`http://localhost:2025/api/residents/${residentId}`);
+        await apiClient.delete(`/residents/${residentId}`);
         setResidents(residents.filter(resident => resident._id !== residentId));
         toast.success('Resident deleted successfully');
       } catch (error) {

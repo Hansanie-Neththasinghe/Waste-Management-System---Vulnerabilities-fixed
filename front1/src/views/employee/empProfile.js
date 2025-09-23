@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Container, Avatar, Typography, Grid, TextField, Button, IconButton, Box, Divider } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import LogoutIcon from '@mui/icons-material/Logout';
-import axios from 'axios';
+import apiClient from '../../utils/apiClient';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Header, Footer } from '../../components/header';
@@ -46,7 +46,7 @@ const EmployeeProfile = () => {
   // Save profile changes
   const handleSaveClick = async () => {
     try {
-      await axios.put(`http://localhost:2025/api/employee/${employee._id}`, formData);
+      await apiClient.put(`/employee/${employee._id}`, formData);
       setProfileData(formData);
       setIsEditing(false);
       toast.success('Profile updated successfully!');
@@ -69,6 +69,7 @@ const EmployeeProfile = () => {
   // Handle logout
   const handleLogout = () => {
     localStorage.removeItem('employee');
+    localStorage.removeItem('authToken');
     toast.success('Logged out successfully!');
     navigate('/employee'); // Redirect to login page
   };

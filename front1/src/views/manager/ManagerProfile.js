@@ -6,7 +6,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { Header, Footer } from '../../components/header'; 
-import axios from 'axios';
+import apiClient from '../../utils/apiClient';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -42,7 +42,7 @@ const UserProfile = () => {
 
   const handleSaveClick = async () => {
     try {
-      const response = await axios.put(`http://localhost:2025/api/manager/${manager._id}`, formData);
+      const response = await apiClient.put(`/manager/${manager._id}`, formData);
       if (response.status === 200) {
         localStorage.setItem('manager', JSON.stringify(response.data));
         setIsEditing(false);
@@ -55,6 +55,7 @@ const UserProfile = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('manager');
+    localStorage.removeItem('authToken');
     navigate('/manager');
   };
 

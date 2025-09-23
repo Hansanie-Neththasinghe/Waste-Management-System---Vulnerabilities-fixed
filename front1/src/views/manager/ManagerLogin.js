@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import apiClient from '../../utils/apiClient';
 import { Link, useNavigate } from 'react-router-dom';
 import { Container, TextField, Button, Typography, Box } from '@mui/material';
 
@@ -12,11 +12,12 @@ function ManagerLogin() {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:2025/api/manager/login', { username, password });
+      const response = await apiClient.post('/manager/login', { username, password });
       console.log('Manager login successful:', response.data);
 
-      // Store manager data in local storage or state
+      // Store both manager data and token in local storage
       localStorage.setItem('manager', JSON.stringify(response.data.manager));
+      localStorage.setItem('authToken', response.data.token);
 
       // Navigate to Manager Home page
       navigate('/manager/home');

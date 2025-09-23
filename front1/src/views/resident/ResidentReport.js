@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { Container, Typography } from '@mui/material';
 import { Chart, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
-import axios from 'axios';
+import apiClient from '../../utils/apiClient';
 import { Header, Footer } from '../../components/header';
 
 // Register Chart.js components for bar chart
@@ -26,13 +26,8 @@ const ResidentReport = () => {
   const fetchTransactions = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:2025/api/transaction'); // Adjust API URL
-      const allTransactions = response.data;
-
-      // Filter transactions based on logged-in user ID
-      const userTransactions = allTransactions.filter(
-        (transaction) => transaction.binOwner === resident._id
-      );
+      const response = await apiClient.get('/transaction'); // Backend now filters by user role
+      const userTransactions = response.data; // No need for client-side filtering
 
       // Group transactions by binType and calculate total weight for each garbage type
       const groupedData = userTransactions.reduce(

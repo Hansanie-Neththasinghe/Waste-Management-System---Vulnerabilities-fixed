@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { Container, Typography, TextField, MenuItem, Button, Grid } from '@mui/material';
 import { Chart, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
-import axios from 'axios';
+import apiClient from '../../../utils/apiClient';
 import { Header, Footer } from '../../../components/header';
 
 // Register Chart.js components for bar chart
@@ -19,7 +19,7 @@ const WasteBarChart = () => {
   const fetchTransactions = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:2025/api/transaction'); // Adjust API URL
+      const response = await apiClient.get('/transaction'); // Adjust API URL
       setTransactions(response.data);
       setLoading(false);
     } catch (error) {
@@ -31,7 +31,7 @@ const WasteBarChart = () => {
   // Fetch all users (residents) to allow selection of a user
   const fetchUsers = async () => {
     try {
-      const response = await axios.get('http://localhost:2025/api/resident'); // Adjust API URL for fetching users
+      const response = await apiClient.get('/resident'); // Adjust API URL for fetching users
       setUsers(response.data);
     } catch (error) {
       console.error('Error fetching users:', error);

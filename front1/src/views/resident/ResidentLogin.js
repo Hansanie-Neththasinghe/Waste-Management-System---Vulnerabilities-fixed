@@ -16,8 +16,9 @@ function ResidentLogin() {
       const response = await axios.post('http://localhost:2025/api/resident/login', { username, password });
       console.log('Resident login successful:', response.data);
 
-      // Store resident data in local storage
+      // Store both resident data and token in local storage
       localStorage.setItem('resident', JSON.stringify(response.data.resident));
+      localStorage.setItem('authToken', response.data.token);
 
       // Navigate to Resident Home page (adjust as needed)
       navigate('/resident/home');

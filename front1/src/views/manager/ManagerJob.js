@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, TextField, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import axios from 'axios';
+import apiClient from '../../utils/apiClient';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Header, Footer } from '../../components/header';
@@ -18,10 +18,10 @@ const JobManagement = () => {
   useEffect(() => {
     const fetchJobsAndEmployees = async () => {
       try {
-        const jobsResponse = await axios.get('http://localhost:2025/api/job');
+        const jobsResponse = await apiClient.get('/job');
         const jobsWithAddress = await Promise.all(
           jobsResponse.data.jobs.map(async (job) => {
-            const residentResponse = await axios.get(`http://localhost:2025/api/resident/${job.resident}`);
+            const residentResponse = await apiClient.get(`/resident/${job.resident}`);
             return { ...job, customerAddress: residentResponse.data.address };
           })
         );
@@ -30,7 +30,7 @@ const JobManagement = () => {
         const sortedJobs = jobsWithAddress.sort((a, b) => new Date(a.date) - new Date(b.date));
         setJobs(sortedJobs);
 
-        const employeesResponse = await axios.get('http://localhost:2025/api/employee');
+        const employeesResponse = await apiClient.get('/employee');
         setEmployees(employeesResponse.data);
       } catch (error) {
         console.error('Error fetching jobs or employees:', error);
@@ -79,7 +79,7 @@ const JobManagement = () => {
   const handleAllocateEmployee = async (employee) => {
     try {
       const updatedJob = { ...selectedJob, employee: employee._id, status: 'Assigned' };
-      await axios.put(`http://localhost:2025/api/job/${selectedJob._id}`, updatedJob);
+      await apiClient.put(`/job/${selectedJob._id}`, updatedJob);
       const updatedJobs = jobs.map((job) => (job._id === selectedJob._id ? updatedJob : job));
       setJobs(updatedJobs);
       toast.success('Employee allocated successfully!');

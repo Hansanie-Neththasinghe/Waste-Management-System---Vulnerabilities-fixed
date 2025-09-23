@@ -27,10 +27,23 @@ exports.createJob = async (req, res) => {
 // Get all jobs
 exports.getAllJobs = async (req, res) => {
     try {
-        const jobs = await Job.find();
+        let jobs;
+        
+        // If user is a resident, only return their own jobs
+        if (req.user.role === 'resident') {
+            jobs = await Job.find({ 
+                $or: [
+                    { residentID: req.user.id },
+                    { resident: req.user.username }
+                ]
+            });
+        } else {
+            // Managers and employees can see all jobs
+            jobs = await Job.find();
+        }
+        
         res.status(200).json({ jobs });
     } catch (err) {
-
         res.status(500).json({ message: 'Error getting jobs', error: err });
     }
 };

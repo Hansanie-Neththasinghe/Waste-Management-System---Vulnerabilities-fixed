@@ -1,22 +1,19 @@
 const express = require('express');
 const router = express.Router();
-const managerController = require('../../controllers/users/managerController'); // Adjust the path as necessary
+const managerController = require('../../controllers/users/managerController');
+const { authenticateToken, authorizeRoles, authorizeOwnResource } = require('../../middleware/auth');
 
-router.post('/create', managerController.createManager);
+// Public routes
+router.post('/login', managerController.loginManager); // Login
 
-// Route to get all managers
-router.get('/', managerController.getAllManagers);
+// System initialization route - only works when no managers exist
+router.post('/initialize', managerController.initializeFirstManager); // First manager creation
 
-// Route to get a manager by ID
-router.get('/:id', managerController.getManagerById);
-
-// Route to update a manager by ID
-router.put('/:id', managerController.updateManagerById);
-
-// Route to delete a manager by ID
-router.delete('/:id', managerController.deleteManagerById);
-
-// Route for manager login
-router.post('/login', managerController.loginManager);
+// Protected routes - only managers can access manager endpoints
+router.post('/create', authenticateToken, authorizeRoles('manager'), managerController.createManager);
+router.get('/', authenticateToken, authorizeRoles('manager'), managerController.getAllManagers);
+router.get('/:id', authenticateToken, authorizeOwnResource, managerController.getManagerById);
+router.put('/:id', authenticateToken, authorizeOwnResource, managerController.updateManagerById);
+router.delete('/:id', authenticateToken, authorizeRoles('manager'), managerController.deleteManagerById);
 
 module.exports = router;

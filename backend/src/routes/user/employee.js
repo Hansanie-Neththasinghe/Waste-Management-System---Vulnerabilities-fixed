@@ -1,27 +1,21 @@
 const express = require('express');
 const empController = require('../../controllers/users/employeeController');
+const { authenticateToken, authorizeRoles, authorizeOwnResource } = require('../../middleware/auth');
 
 const router = express.Router();
 
-// Route to create a new employee
-router.post('/create', empController.addEmployee);
+// Public routes
+router.post('/login', empController.loginEmployee); // Login
 
-// Route to get all employees
-router.get('/', empController.getAllEmployees);
+// Protected routes
+// Only managers can create, get all, and delete employees
+router.post('/create', authenticateToken, authorizeRoles('manager'), empController.addEmployee);
+router.get('/', authenticateToken, authorizeRoles('manager'), empController.getAllEmployees);
+router.delete('/:id', authenticateToken, authorizeRoles('manager'), empController.deleteEmployee);
 
-// Route to get an employee by ID
-router.get('/:id', empController.getEmployeeById);
-
-// Route to update an employee by ID
-router.put('/:id', empController.updateEmployee);
-
-// Route to delete an employee by ID
-router.delete('/:id', empController.deleteEmployee);
-
-// Route for employee login
-router.post('/login', empController.loginEmployee);
-
-// Route to get an employee by username
-router.get('/:username', empController.getEmployeeByUsername);
+// Employees can access their own data, managers can access all
+router.get('/:id', authenticateToken, authorizeOwnResource, empController.getEmployeeById);
+router.put('/:id', authenticateToken, authorizeOwnResource, empController.updateEmployee);
+router.get('/username/:username', authenticateToken, authorizeOwnResource, empController.getEmployeeByUsername);
 
 module.exports = router;

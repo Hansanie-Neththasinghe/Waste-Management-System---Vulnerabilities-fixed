@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import apiClient from '../../utils/apiClient';
 import { useNavigate } from 'react-router-dom';
 import { Container, TextField, Button, Typography, Box } from '@mui/material';
 
@@ -12,10 +12,11 @@ const EmployeeLogin = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:2025/api/employee/login', { username, password });
+      const response = await apiClient.post('/employee/login', { username, password });
 
-      // Store employee data in local storage or state
+      // Store both employee data and token in local storage
       localStorage.setItem('employee', JSON.stringify(response.data.data));
+      localStorage.setItem('authToken', response.data.token);
 
       // Navigate to Employee Home page or dashboard
       navigate('/employee/home');

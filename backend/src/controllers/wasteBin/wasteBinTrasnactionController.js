@@ -3,9 +3,25 @@ const WasteBinTransaction = require('../../models/WasteBin/wasteTransaction');
 // Get all waste bin transactions
 exports.getAllTransactions = async (req, res) => {
     try {
-        const transactions = await WasteBinTransaction.find();
+        console.log('🔍 Transaction request - User role:', req.user?.role);
+        console.log('🔍 Transaction request - User ID:', req.user?.id);
+        
+        let transactions;
+        
+        // If user is a resident, only return their own transactions
+        if (req.user.role === 'resident') {
+            console.log('🔍 Filtering transactions for resident:', req.user.id);
+            transactions = await WasteBinTransaction.find({ binOwner: req.user.id });
+        } else {
+            // Managers and employees can see all transactions
+            console.log('🔍 Returning all transactions for role:', req.user.role);
+            transactions = await WasteBinTransaction.find();
+        }
+        
+        console.log('🔍 Found transactions:', transactions.length);
         res.status(200).json(transactions);
     } catch (error) {
+        console.error('❌ Transaction controller error:', error);
         res.status(500).json({ message: error.message });
     }
 };

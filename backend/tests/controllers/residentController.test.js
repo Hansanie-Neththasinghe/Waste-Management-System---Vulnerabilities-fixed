@@ -23,9 +23,9 @@ describe('Resident Controller Test', () => {
         username: 'johndoe',
         name: 'John Doe',
         email: 'johndoe@example.com',
-        password: 'password123',
-        address: '123 Street',
-        contactNumber: '555-5555'
+        password: 'Test@123456',
+        address: '123 Test Street, City',
+        contactNumber: '+94771234567'
       });
 
     expect(res.statusCode).toEqual(201);
@@ -61,9 +61,9 @@ describe('Resident Controller Test', () => {
       username: 'janedoe',
       name: 'Jane Doe',
       email: 'janedoe@example.com',
-      password: 'password123',
-      address: '456 Avenue',
-      contactNumber: '555-1234'
+      password: 'Test@123456',
+      address: '456 Test Avenue, City',
+      contactNumber: '+94772345678'
     });
     await resident.save();
   

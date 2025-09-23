@@ -8,21 +8,42 @@ const residentController = require('../../src/controllers/users/residentControll
 
 // Setup Express app for testing
 app.use(express.json());
-app.post('/residents/login', residentController.loginResident);
+app.use(express.urlencoded({ extended: true }));
+
+// Basic error handler
+app.use((err, req, res, next) => {
+    console.error(err);
+    res.status(500).json({ message: 'Internal server error' });
+});
+
+// Routes
+app.post('/residents/login', async (req, res, next) => {
+    try {
+        await residentController.loginResident(req, res);
+    } catch (err) {
+        next(err);
+    }
+});
 
 describe('Authentication Test', () => {
+  // Setup test environment variables
+  beforeAll(() => {
+    process.env.JWT_SECRET = 'test-secret-key';
+    process.env.JWT_EXPIRES_IN = '1h';
+  });
+
   let testResident;
 
   beforeAll(async () => {
     // Create a test resident with hashed password
-    const hashedPassword = await bcrypt.hash('testpassword123', 12);
+    const hashedPassword = await bcrypt.hash('Test@123456', 12);
     testResident = new Resident({
       username: 'testuser',
       name: 'Test User',
       email: 'test@example.com',
       password: hashedPassword,
-      address: '123 Test Street',
-      contactNumber: '555-1234'
+      address: '123 Test Street, City',
+      contactNumber: '+94771234567'
     });
     await testResident.save();
   });
@@ -38,7 +59,7 @@ describe('Authentication Test', () => {
         .post('/residents/login')
         .send({
           username: 'testuser',
-          password: 'testpassword123'
+          password: 'Test@123456'
         });
 
       expect(res.statusCode).toEqual(200);

@@ -7,9 +7,9 @@ describe('Resident Model Test', () => {
       username: 'john_doe',
       name: 'John Doe',
       email: 'john@example.com',
-      password: 'password123',
-      address: '123 Street',
-      contactNumber: '555-5555'
+      password: 'Test@123456',
+      address: '123 Test Street, City',
+      contactNumber: '+94773456789'
     });
     const savedResident = await validResident.save();
 

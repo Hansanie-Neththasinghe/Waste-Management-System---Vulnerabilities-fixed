@@ -1,6 +1,7 @@
 const request = require('supertest');
 const express = require('express');
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
 const Manager = require('../../src/models/users/manager');
 const managerController = require('../../src/controllers/users/managerController');
 
@@ -8,8 +9,24 @@ const managerController = require('../../src/controllers/users/managerController
 const app = express();
 app.use(express.json());
 
+// Mock authentication middleware
+app.use((req, res, next) => {
+    // For tests requiring auth, we can set req.user here
+    const authHeader = req.headers['authorization'];
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        // Mock user data for testing
+        req.user = {
+            id: 'mockUserId',
+            role: 'admin',
+            username: 'admin'
+        };
+    }
+    next();
+});
+
 // Define the routes
 app.post('/managers', managerController.createManager);
+app.post('/managers/init', managerController.initializeFirstManager);
 app.get('/managers', managerController.getAllManagers);
 app.get('/managers/:id', managerController.getManagerById);
 app.delete('/managers/:id', managerController.deleteManagerById);
@@ -17,16 +34,22 @@ app.put('/managers/:id', managerController.updateManagerById);
 app.post('/managers/login', managerController.loginManager);
 
 describe('Manager Controller Test', () => {
+  beforeAll(() => {
+    // Set up test environment variables
+    process.env.JWT_SECRET = 'test-secret-key';
+    process.env.JWT_EXPIRES_IN = '1h';
+    process.env.BCRYPT_SALT_ROUNDS = '12';
+  });
   
   // Clean up the manager collection before each test
   beforeEach(async () => {
     await Manager.deleteMany();
   });
 
-  // Test case 1: Add a new manager
+  // Test case 1: Initialize first manager
   it('should create a new manager', async () => {
     const res = await request(app)
-      .post('/managers')
+      .post('/managers/init')
       .send({
         firstName: 'John',
         lastName: 'Doe',
@@ -36,7 +59,8 @@ describe('Manager Controller Test', () => {
       });
 
     expect(res.statusCode).toEqual(201);
-    expect(res.body.message).toBe('Manager created successfully');
+    expect(res.body.status).toBe('success');
+    expect(res.body.message).toBe('First manager initialized successfully. System is now secured.');
     expect(res.body.data).toHaveProperty('_id');
     expect(res.body.data.username).toMatch(/^MAN\d{3}$/);  // Check if username matches 'MANXXX'
   });
@@ -116,12 +140,13 @@ describe('Manager Controller Test', () => {
 
   // Test case 6: Login a manager with valid credentials
   it('should login a manager with valid credentials', async () => {
+    const hashedPassword = await bcrypt.hash('password123', 12);
     const manager = new Manager({
       firstName: 'Liam',
       lastName: 'Nelson',
       email: 'liam.nelson@example.com',
       username: 'MAN005',
-      password: 'password123',
+      password: hashedPassword,
       phoneNumber: '555-1111'
     });
     await manager.save();
@@ -142,14 +167,14 @@ describe('Manager Controller Test', () => {
 //     expect(res.body.message).toBe('Manager not found');
 //   });
 
-  // Test case 8: Return 404 when manager not found for login
+  // Test case 8: Return 401 when manager not found for login
   it('should return 401 when manager login fails with invalid credentials', async () => {
     const res = await request(app)
       .post('/managers/login')
       .send({ username: 'invaliduser', password: 'wrongpassword' });
 
     expect(res.statusCode).toEqual(401);
-    expect(res.body.message).toBe('Invalid username or password');
+    expect(res.body.message).toBe('Invalid credentials');
   });
 
   // Test case 9: Return an empty array when no managers are found

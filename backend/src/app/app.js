@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
 const passport = require('../config/passport');
+const { AUTH, CORS } = require('../config/constants');
 const {globalErrHandler, notFoundErr,} = require('../middleware/globalErrHandler');
 const wasteBinRouter = require('../routes/wastebin/wastebin');
 const managerRouter = require('../routes/user/manager');
@@ -10,13 +11,13 @@ const jobRouter = require('../routes/jobs/jobs');
 const empRouter = require('../routes/user/employee');
 const transaction = require('../routes/wastebin/wastebinTransaction');
 const oauthRouter = require('../routes/auth/oauth');
-
+const sanitizeRequest = require('../middleware/sanitization');
 
 const app = express();
 
 // Session configuration for Passport
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'your-session-secret',
+    secret: AUTH.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: { 
@@ -31,9 +32,11 @@ app.use(passport.session());
 
 app.use(express.json());
 app.use(cors({ 
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    origin: CORS.CLIENT_URL,
     credentials: true // Allow credentials for session-based auth
 }));
+app.use(express.json());
+app.use(sanitizeRequest);
 
 //Waste Bin routes
 app.use('/api/wastebin', wasteBinRouter);

@@ -30,16 +30,12 @@ exports.createResident = async (req, res) => {
     try {
         const { username, name, email, password, address, contactNumber } = req.body;
         
-        // Input validation
-        if (!username || !name || !email || !password || !address || !contactNumber) {
-            return res.status(400).json({ 
-                message: 'All fields are required: username, name, email, password, address, contactNumber' 
-            });
-        }
-
         // Check if resident already exists
-        const existingResident = await Resident.findOne({ 
-            $or: [{ username }, { email }] 
+        const existingResident = await Resident.findOne({
+            $or: [
+                { username: { $regex: new RegExp('^' + username + '$', 'i') } },
+                { email: { $regex: new RegExp('^' + email + '$', 'i') } }
+            ]
         });
         
         if (existingResident) {
@@ -68,18 +64,72 @@ exports.createResident = async (req, res) => {
         
         res.status(201).json(residentData);
     } catch (error) {
-        res.status(500).json({ message: 'Internal server error' });
+        console.error('Error creating resident:', error);
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({
+                message: 'Validation error',
+                errors: Object.values(error.errors).map(err => err.message)
+            });
+        }
+        res.status(500).json({ message: error.message || 'Internal server error' });
     }
 };
 
 // Update a resident by ID
 exports.updateResident = async (req, res) => {
     try {
-        const updatedResident = await Resident.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        if (!updatedResident) return res.status(404).json({ message: 'Resident not found' });
-        res.status(200).json(updatedResident);
+        // Only allow specific fields to be updated
+        const allowedUpdates = {
+            name: req.body.name,
+            email: req.body.email,
+            address: req.body.address,
+            contactNumber: req.body.contactNumber
+        };
+
+        // Remove undefined fields
+        Object.keys(allowedUpdates).forEach(key => 
+            allowedUpdates[key] === undefined && delete allowedUpdates[key]
+        );
+
+        // If email is being updated, check if it's already in use
+        if (allowedUpdates.email) {
+            const existingResident = await Resident.findOne({
+                email: { $regex: new RegExp('^' + allowedUpdates.email + '$', 'i') },
+                _id: { $ne: req.params.id }
+            });
+
+            if (existingResident) {
+                return res.status(409).json({
+                    message: 'Email already in use'
+                });
+            }
+        }
+
+        const updatedResident = await Resident.findByIdAndUpdate(
+            req.params.id,
+            { $set: allowedUpdates },
+            { 
+                new: true,
+                runValidators: true,
+                context: 'query'
+            }
+        );
+
+        if (!updatedResident) {
+            return res.status(404).json({ message: 'Resident not found' });
+        }
+
+        // Don't send password in response
+        const { password, ...residentData } = updatedResident.toObject();
+        res.status(200).json(residentData);
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({ 
+                message: 'Validation error',
+                errors: Object.values(error.errors).map(err => err.message)
+            });
+        }
+        res.status(500).json({ message: 'Internal server error' });
     }
 };
 

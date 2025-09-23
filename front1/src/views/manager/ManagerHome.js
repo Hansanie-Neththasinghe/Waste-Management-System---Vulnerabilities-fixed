@@ -5,7 +5,7 @@ import { Header, Footer } from '../../components/header';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 import AddIcon from '@mui/icons-material/Add';
-import axios from 'axios';
+import apiClient from '../../utils/apiClient';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -21,7 +21,7 @@ const ManagerHome = () => {
   useEffect(() => {
     const fetchResidentCount = async () => {
       try {
-        const response = await axios.get('http://localhost:2025/api/resident/count');
+        const response = await apiClient.get('/resident/count');
         setResidentCount(response.data.count);
       } catch (error) {
         console.error('Error fetching resident count:', error);
@@ -33,7 +33,7 @@ const ManagerHome = () => {
   useEffect(() => {
     const fetchWasteBinCount = async () => {
       try {
-        const response = await axios.get('http://localhost:2025/api/wasteBin/count');
+        const response = await apiClient.get('/wasteBin/count');
         setWasteBinCount(response.data.totalWasteBins);
       } catch (error) {
         console.error('Error fetching waste bin count:', error);
@@ -69,7 +69,7 @@ const ManagerHome = () => {
     }
 
     try {
-      await axios.post('http://localhost:2025/api/wasteBin', { binType, maxWeight });
+      await apiClient.post('/wasteBin', { binType, maxWeight });
       setWasteBinCount(wasteBinCount + 1);
       toast.success('Waste bin created successfully!');
       handleClose();

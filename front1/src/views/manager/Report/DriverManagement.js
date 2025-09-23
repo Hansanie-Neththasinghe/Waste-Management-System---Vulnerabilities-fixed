@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, TextField, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
-import axios from 'axios';
+import apiClient from '../../../utils/apiClient';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Header, Footer } from '../../../components/header';
@@ -20,7 +20,7 @@ const DriverManagement = () => {
   useEffect(() => {
     const fetchDrivers = async () => {
       try {
-        const response = await axios.get('http://localhost:2025/api/employee'); // Assuming this fetches all employees including drivers
+        const response = await apiClient.get('/employee'); // Assuming this fetches all employees including drivers
         setDrivers(response.data);
       } catch (error) {
         console.error('Error fetching drivers:', error);
@@ -33,7 +33,7 @@ const DriverManagement = () => {
   // Handle driver creation
   const handleCreateDriver = async () => {
     try {
-      const response = await axios.post('http://localhost:2025/api/employee/create', newDriver);
+      const response = await apiClient.post('/employee/create', newDriver);
       setDrivers([...drivers, response.data.data]); // Add new driver to the list
       toast.success('Driver created successfully');
       setOpenDialog(false); // Close dialog after success
@@ -46,7 +46,7 @@ const DriverManagement = () => {
   // Handle driver deletion
   const handleDeleteDriver = async (driverId) => {
     try {
-      await axios.delete(`http://localhost:2025/api/employee/${driverId}`);
+      await apiClient.delete(`/employee/${driverId}`);
       setDrivers(drivers.filter(driver => driver._id !== driverId));
       toast.success('Driver deleted successfully');
     } catch (error) {

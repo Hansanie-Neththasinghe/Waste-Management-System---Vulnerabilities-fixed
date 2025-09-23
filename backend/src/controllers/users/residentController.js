@@ -27,12 +27,48 @@ exports.getResidentById = async (req, res) => {
 
 // Create a new resident
 exports.createResident = async (req, res) => {
-    const resident = new Resident(req.body);
     try {
+        const { username, name, email, password, address, contactNumber } = req.body;
+        
+        // Input validation
+        if (!username || !name || !email || !password || !address || !contactNumber) {
+            return res.status(400).json({ 
+                message: 'All fields are required: username, name, email, password, address, contactNumber' 
+            });
+        }
+
+        // Check if resident already exists
+        const existingResident = await Resident.findOne({ 
+            $or: [{ username }, { email }] 
+        });
+        
+        if (existingResident) {
+            return res.status(409).json({ 
+                message: 'Resident with this username or email already exists' 
+            });
+        }
+
+        // Hash password before saving
+        const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 12;
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+        const resident = new Resident({
+            username,
+            name,
+            email,
+            password: hashedPassword,
+            address,
+            contactNumber
+        });
+
         const newResident = await resident.save();
-        res.status(201).json(newResident);
+        
+        // Don't send password in response
+        const { password: _, ...residentData } = newResident.toObject();
+        
+        res.status(201).json(residentData);
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        res.status(500).json({ message: 'Internal server error' });
     }
 };
 
@@ -62,15 +98,40 @@ exports.deleteResident = async (req, res) => {
 exports.loginResident = async (req, res) => {
     try {
         const { username, password } = req.body;
+        
+        // Input validation
+        if (!username || !password) {
+            return res.status(400).json({ message: 'Username and password are required' });
+        }
+        
         const resident = await Resident.findOne({ username });
-        if (!resident) return res.status(404).json({ message: 'Resident not found' });
+        if (!resident) return res.status(401).json({ message: 'Invalid credentials' });
 
-        const isMatch = await Resident.findOne({password});
-        if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
+        // Properly compare password using bcrypt
+        const isMatch = await bcrypt.compare(password, resident.password);
+        if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
 
-        res.status(200).json({ message: 'Login successful', resident });
+        // Generate JWT token
+        const token = jwt.sign(
+            { 
+                id: resident._id, 
+                username: resident.username,
+                role: 'resident'
+            }, 
+            process.env.JWT_SECRET, 
+            { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+        );
+
+        // Don't send password in response
+        const { password: _, ...residentData } = resident.toObject();
+        
+        res.status(200).json({ 
+            message: 'Login successful', 
+            token,
+            resident: residentData 
+        });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: 'Internal server error' });
     }
 };
 

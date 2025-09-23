@@ -1,4 +1,5 @@
 const Employee = require('../../models/users/employee');
+const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 
@@ -12,22 +13,47 @@ exports.addEmployee = async (req, res) => {
     try {
         const { firstName, lastName, email, password, phoneNumber } = req.body;
 
+        // Input validation
+        if (!firstName || !lastName || !email || !password || !phoneNumber) {
+            return res.status(400).json({ 
+                message: 'All fields are required: firstName, lastName, email, password, phoneNumber' 
+            });
+        }
+
+        // Check if employee already exists
+        const existingEmployee = await Employee.findOne({ email });
+        if (existingEmployee) {
+            return res.status(409).json({ 
+                message: 'Employee with this email already exists' 
+            });
+        }
+
         const username = generateRandomUsername();
 
+        // Hash password before saving
+        const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 12;
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
 
         const newEmployee = new Employee({
             firstName,
             lastName,
             email,
             username,
-            password,
+            password: hashedPassword,
             phoneNumber
         });
 
         await newEmployee.save();
-        res.status(201).json({ message: 'Employee added successfully', data: newEmployee });
+        
+        // Don't send password in response
+        const { password: _, ...employeeData } = newEmployee.toObject();
+        
+        res.status(201).json({ 
+            message: 'Employee added successfully', 
+            data: employeeData 
+        });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ message: 'Internal server error' });
     }
 };
 
@@ -74,16 +100,44 @@ exports.deleteEmployee = async (req, res) => {
 exports.loginEmployee = async (req, res) => {
     try {
         const { username, password } = req.body;
-
-        const employee = await Employee.findOne({ username });
-
-        if (!employee || employee.password !== password) {
-            return res.status(404).json({ message: 'Invalid Username or Password' });
+        
+        // Input validation
+        if (!username || !password) {
+            return res.status(400).json({ message: 'Username and password are required' });
         }
 
-        res.status(200).json({ message: 'Login successful', data: employee });
+        const employee = await Employee.findOne({ username });
+        if (!employee) {
+            return res.status(401).json({ message: 'Invalid credentials' });
+        }
+
+        // Properly compare password using bcrypt
+        const isMatch = await bcrypt.compare(password, employee.password);
+        if (!isMatch) {
+            return res.status(401).json({ message: 'Invalid credentials' });
+        }
+
+        // Generate JWT token
+        const token = jwt.sign(
+            { 
+                id: employee._id, 
+                username: employee.username,
+                role: 'employee'
+            }, 
+            process.env.JWT_SECRET, 
+            { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+        );
+
+        // Don't send password in response
+        const { password: _, ...employeeData } = employee.toObject();
+        
+        res.status(200).json({ 
+            message: 'Login successful', 
+            token,
+            data: employeeData 
+        });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ message: 'Internal server error' });
     }
 };
 

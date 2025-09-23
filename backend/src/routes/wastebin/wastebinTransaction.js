@@ -1,21 +1,23 @@
 const express = require('express');
 const wastebinTransactionController = require('../../controllers/wasteBin/wasteBinTrasnactionController');
+const { authenticateToken, authorizeRoles } = require('../../middleware/auth');
 
 const router = express.Router();
 
-// Route to get all wastebin transactions
-router.get('/', wastebinTransactionController.getAllTransactions);
+// All transaction routes require authentication
+// Get all transactions - managers and employees can access all, residents can access their own
+router.get('/', authenticateToken, wastebinTransactionController.getAllTransactions);
 
-// Route to get a specific wastebin transaction by ID
-router.get('/:id', wastebinTransactionController.getTransactionById);
+// Get specific transaction - all authenticated users can access based on their role
+router.get('/:id', authenticateToken, wastebinTransactionController.getTransactionById);
 
-// Route to create a new wastebin transaction
-router.post('/', wastebinTransactionController.createTransaction);
+// Create transaction - all authenticated users can create
+router.post('/', authenticateToken, wastebinTransactionController.createTransaction);
 
-// Route to update a specific wastebin transaction by ID
-router.put('/:id', wastebinTransactionController.updateTransaction);
+// Update transaction - only managers can update
+router.put('/:id', authenticateToken, authorizeRoles('manager'), wastebinTransactionController.updateTransaction);
 
-// Route to delete a specific wastebin transaction by ID
-router.delete('/:id', wastebinTransactionController.deleteTransaction);
+// Delete transaction - only managers can delete
+router.delete('/:id', authenticateToken, authorizeRoles('manager'), wastebinTransactionController.deleteTransaction);
 
 module.exports = router;

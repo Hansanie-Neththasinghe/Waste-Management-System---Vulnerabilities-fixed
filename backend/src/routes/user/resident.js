@@ -1,31 +1,28 @@
 const express = require('express');
 const residentController = require('../../controllers/users/residentController');
+const { authenticateToken, authorizeRoles, authorizeOwnResource } = require('../../middleware/auth');
 
 const router = express.Router();
 
-// Get all residents
-router.get('/count', residentController.getResidentCount);
-router.get('/', residentController.getAllResidents);
+// Public routes (no authentication required)
+router.post('/', residentController.createResident); // Registration
+router.post('/login', residentController.loginResident); // Login
 
-// Get a single resident by ID
-//router.get('/:id', residentController.getResidentByObjectId);
+// Protected routes (authentication required)
+// Get all residents - only managers can access
+router.get('/', authenticateToken, authorizeRoles('manager'), residentController.getAllResidents);
 
-// Get a single resident by ID
-router.get('/:username', residentController.getResidentById);
+// Get resident count - only managers can access
+router.get('/count', authenticateToken, authorizeRoles('manager'), residentController.getResidentCount);
 
+// Get a single resident by username - residents can access their own data, managers can access all
+router.get('/:username', authenticateToken, authorizeOwnResource, residentController.getResidentById);
 
+// Update a resident by ID - residents can update their own data, managers and employees can update all
+router.put('/:id', authenticateToken, authorizeRoles('manager', 'resident', 'employee'), residentController.updateResident);
 
-// Create a new resident
-router.post('/', residentController.createResident);
-
-// Update a resident by ID
-router.put('/:id', residentController.updateResident);
-
-// Delete a resident by ID
-router.delete('/:id', residentController.deleteResident);
-
-// Login resident
-router.post('/login', residentController.loginResident);
+// Delete a resident by ID - only managers can delete
+router.delete('/:id', authenticateToken, authorizeRoles('manager'), residentController.deleteResident);
 
 // Get total number of residents
 

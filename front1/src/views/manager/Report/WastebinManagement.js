@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button } from '@mui/material';
-import axios from 'axios';
+import apiClient from '../../../utils/apiClient';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Header, Footer } from '../../../components/header';
@@ -12,7 +12,7 @@ const WastebinManagement = () => {
   useEffect(() => {
     const fetchWastebins = async () => {
       try {
-        const response = await axios.get('http://localhost:2025/api/wastebin');
+        const response = await apiClient.get('/wastebin');
         setWastebins(response.data.wasteBins);
       } catch (error) {
         console.error('Error fetching wastebins:', error);
@@ -26,7 +26,7 @@ const WastebinManagement = () => {
   const handleDeleteWastebin = async (binID) => {
     try {
       // Use binID for deletion instead of _id
-      await axios.delete(`http://localhost:2025/api/wastebin/${binID}`);
+      await apiClient.delete(`/wastebin/${binID}`);
       // Filter the wastebins to remove the one with the matching binID
       setWastebins(wastebins.filter(bin => bin.binID !== binID));
       toast.success('Wastebin deleted successfully');

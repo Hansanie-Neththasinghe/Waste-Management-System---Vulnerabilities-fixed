@@ -5,7 +5,7 @@ import { Header, Footer } from '../../components/header';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import AddIcon from '@mui/icons-material/Add';
-import axios from 'axios';
+import apiClient from '../../utils/apiClient';
 //import MonetizationOnOutlinedIcon from '@mui/icons-material/MonetizationOnOutlined'; // Black and white coin icon
 
 const ResidentHome = () => {
@@ -31,10 +31,10 @@ const ResidentHome = () => {
     if (resident && resident._id) {
       const fetchWasteBinsAndPoints = async () => {
         try {
-          const wasteBinResponse = await axios.get(`http://localhost:2025/api/wastebin/${resident._id}`);
+          const wasteBinResponse = await apiClient.get(`/wastebin/${resident._id}`);
           setWasteBins(wasteBinResponse.data.wasteBins);
 
-          const pointsResponse = await axios.get(`http://localhost:2025/api/resident/${resident.username}`);
+          const pointsResponse = await apiClient.get(`/resident/${resident.username}`);
           setTotalPoints(pointsResponse.data.totalPoints);
         } catch (error) {
           console.error('Error fetching resident data:', error);
@@ -43,7 +43,7 @@ const ResidentHome = () => {
 
       fetchWasteBinsAndPoints();
     }
-  }, [resident]);
+  }, [resident?._id, resident?.username]); // Only re-run when specific resident properties change
 
   // Update the time every second
   useEffect(() => {
@@ -74,7 +74,7 @@ const ResidentHome = () => {
 
     if (query.length > 1) {
       try {
-        const response = await axios.get(`http://localhost:2025/api/wasteBin/search`, { params: { query } });
+        const response = await apiClient.get(`/wasteBin/search`, { params: { query } });
         setSearchResults(response.data.availableWasteBins); // Update search results
       } catch (error) {
         console.error('Error searching for available waste bins:', error);
@@ -87,7 +87,7 @@ const ResidentHome = () => {
   // Handle adding a new waste bin to the resident by updating the bin's owner
   const handleAddWasteBin = async (selectedBinID) => {
     try {
-      const response = await axios.post(`http://localhost:2025/api/wasteBin/assignOwner`, {
+      const response = await apiClient.post(`/wasteBin/assignOwner`, {
         residentId: resident._id,
         binID: selectedBinID
       });

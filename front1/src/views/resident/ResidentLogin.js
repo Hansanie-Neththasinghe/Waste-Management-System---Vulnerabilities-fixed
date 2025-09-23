@@ -1,13 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
-import { Container, TextField, Button, Typography, Box } from '@mui/material';
+import { Container, TextField, Button, Typography, Box, Divider } from '@mui/material';
+import GoogleIcon from '@mui/icons-material/Google';
 
 function ResidentLogin() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+
+  // Handle OAuth success callback
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    const userParam = urlParams.get('user');
+
+    if (token && userParam) {
+      try {
+        const user = JSON.parse(decodeURIComponent(userParam));
+        
+        // Store user data and token
+        localStorage.setItem('resident', JSON.stringify(user));
+        localStorage.setItem('authToken', token);
+        
+        // Navigate to resident home
+        navigate('/resident/home');
+      } catch (error) {
+        console.error('Error parsing OAuth callback data:', error);
+        setError('Authentication failed. Please try again.');
+      }
+    }
+
+    const errorMessage = urlParams.get('message');
+    if (errorMessage) {
+      setError(decodeURIComponent(errorMessage));
+    }
+  }, [navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -16,8 +45,9 @@ function ResidentLogin() {
       const response = await axios.post('http://localhost:2025/api/resident/login', { username, password });
       console.log('Resident login successful:', response.data);
 
-      // Store resident data in local storage
+      // Store both resident data and token in local storage
       localStorage.setItem('resident', JSON.stringify(response.data.resident));
+      localStorage.setItem('authToken', response.data.token);
 
       // Navigate to Resident Home page (adjust as needed)
       navigate('/resident/home');
@@ -29,6 +59,11 @@ function ResidentLogin() {
       }
       console.error('Error logging in resident:', err);
     }
+  };
+
+  const handleGoogleSignIn = () => {
+    // Redirect to Google OAuth endpoint
+    window.location.href = 'http://localhost:2025/auth/google';
   };
 
   return (
@@ -84,6 +119,32 @@ function ResidentLogin() {
             Log in
           </Button>
         </form>
+
+        {/* Divider */}
+        <Divider sx={{ my: 3 }}>
+          <Typography variant="body2" color="textSecondary">
+            OR
+          </Typography>
+        </Divider>
+
+        {/* Google Sign-In Button */}
+        <Button
+          fullWidth
+          variant="outlined"
+          startIcon={<GoogleIcon />}
+          onClick={handleGoogleSignIn}
+          sx={{ 
+            mb: 2, 
+            borderColor: '#db4437', 
+            color: '#db4437',
+            '&:hover': { 
+              borderColor: '#c23321', 
+              backgroundColor: '#fdf2f2' 
+            } 
+          }}
+        >
+          Continue with Google
+        </Button>
 
         <Box mt={2}>
           <Link to="/forgot-password" style={{ color: '#2e7d32', textDecoration: 'none', fontSize: '0.875rem' }}>

@@ -1,9 +1,11 @@
 //import files 
 const dotenv = require('dotenv');
+
+// Load environment variables FIRST, before any other modules
+dotenv.config({ path: './.env' });
+
 const mongoose = require('mongoose');
 const app = require('./src/app/app');
-
-dotenv.config({ path: './.env' });
 
 
 const PORT = process.env.PORT || 2025;

@@ -21,10 +21,13 @@ import ResidentHome from '../views/resident/ResidentHome';
 import ResidentProfile from '../views/resident/ResidentProfile';
 import ResidentJobCreate from '../views/resident/ResidentJobCreate';
 import ResidentReport from '../views/resident/ResidentReport';
+import OAuthSuccess from '../views/resident/OAuthSuccess';
+import OAuthError from '../views/resident/OAuthError';
 //Emp Components
 import EmpLogin from '../views/employee/empLogin';
 import EmpHome from '../views/employee/empHome';
 import EmpProfile from '../views/employee/empProfile';
+import EmployeeReport from '../views/employee/EmployeeReport';
 
 const AppRoutes = () => {
   return (
@@ -48,10 +51,14 @@ const AppRoutes = () => {
         <Route path="/resident/profile" element={<ResidentProfile />} />
         <Route path="/resident/job" element={<ResidentJobCreate />} />
         <Route path="/resident/report" element={<ResidentReport />} />
+        <Route path="/oauth/success" element={<OAuthSuccess />} />
+        <Route path="/oauth/error" element={<OAuthError />} />
 
         <Route path="/employee" element={<EmpLogin />} />
         <Route path="/employee/home" element={<EmpHome />} />
+        <Route path="/employee/job" element={<EmpHome />} />
         <Route path="/employee/profile" element={<EmpProfile />} />
+        <Route path="/employee/report" element={<EmployeeReport />} />
         {/* Add more routes for residents and drivers */}
       </Routes>
     </Router>

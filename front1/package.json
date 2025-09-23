@@ -5,6 +5,7 @@
   "dependencies": {
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
+    "@google-cloud/local-auth": "^3.0.1",
     "@mui/icons-material": "^6.1.4",
     "@mui/material": "^6.1.4",
     "@mui/x-date-pickers": "^7.21.0",
@@ -13,8 +14,9 @@
     "@testing-library/user-event": "^13.5.0",
     "@windmill/react-ui": "^0.6.0",
     "axios": "^1.7.7",
-    "chart.js": "^4.4.5",
+    "chart.js": "^4.4.0",
     "date-fns": "^4.1.0",
+    "google-auth-library": "^10.3.0",
     "mapbox-gl": "^3.7.0",
     "react": "^18.3.1",
     "react-calendar": "^5.0.0",

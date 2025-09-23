@@ -3,7 +3,7 @@ import { Container, Card, CardContent, Typography, Avatar, Grid, Button, TextFie
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import LogoutIcon from '@mui/icons-material/Logout';
-import axios from 'axios';
+import apiClient from '../../utils/apiClient';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Header, Footer } from '../../components/header';
@@ -33,7 +33,7 @@ const ResidentProfile = () => {
     if (resident && resident._id) {
       const fetchTotalPoints = async () => {
         try {
-          const response = await axios.get(`http://localhost:2025/api/resident/${resident.username}`);
+          const response = await apiClient.get(`/resident/${resident.username}`);
           setTotalPoints(response.data.totalPoints);
         } catch (error) {
           console.error('Error fetching total points:', error);
@@ -41,7 +41,7 @@ const ResidentProfile = () => {
       };
       fetchTotalPoints();
     }
-  }, [resident]);
+  }, [resident?.username]); // Only re-run when username changes
 
   // Toggle Edit Mode
   const handleEditClick = () => setIsEditing(!isEditing);
@@ -61,7 +61,7 @@ const ResidentProfile = () => {
   // Save Profile Changes
   const handleSaveClick = async () => {
     try {
-      await axios.put(`http://localhost:2025/api/resident/${resident._id}`, formData);
+      await apiClient.put(`/resident/${resident._id}`, formData);
       setProfileData(formData);
       setIsEditing(false);
       toast.success('Profile updated successfully!');
@@ -84,6 +84,7 @@ const ResidentProfile = () => {
   // Handle Logout
   const handleLogout = () => {
     localStorage.removeItem('resident');
+    localStorage.removeItem('authToken');
     toast.success('Logged out successfully!');
     navigate('/resident'); // Redirect to login page
   };

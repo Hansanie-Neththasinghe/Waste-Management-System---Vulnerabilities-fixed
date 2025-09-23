@@ -32,11 +32,21 @@ const residentSchema = new mongoose.Schema({
         unique: true,
         sparse: true, // Allows multiple null values for Google OAuth users
         trim: true,
+        minlength: [3, 'Username must be at least 3 characters long'],
+        maxlength: [30, 'Username cannot exceed 30 characters'],
+        match: [/^[a-zA-Z0-9_-]+$/, 'Username can only contain letters, numbers, underscores, and hyphens'],
+        validate: {
+            validator: function(v) {
+                return !v.includes('admin') && !v.includes('root'); // Prevent reserved usernames
+            },
+            message: 'This username is not allowed'
+        }
     },
     name: {
         type: String,
         required: true,
         trim: true,
+        maxlength: [100, 'Name cannot exceed 100 characters']
     },
     email: {
         type: String,
@@ -44,6 +54,17 @@ const residentSchema = new mongoose.Schema({
         unique: true, // Email should be unique for both regular and OAuth users
         trim: true,
         lowercase: true,
+        match: [
+            /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+            'Please enter a valid email address'
+        ],
+        validate: {
+            validator: function(v) {
+                // Additional email validation if needed
+                return v.length <= 254; // Maximum email length
+            },
+            message: 'Email is too long'
+        }
     },
     password: {
         type: String,
@@ -74,6 +95,9 @@ const residentSchema = new mongoose.Schema({
         required: function() {
             return this.authProvider === 'local'; // Address required only for local registration
         },
+        trim: true,
+        minlength: [5, 'Address must be at least 5 characters long'],
+        maxlength: [200, 'Address cannot exceed 200 characters']
     },
     contactNumber: {
         type: String,
@@ -81,6 +105,17 @@ const residentSchema = new mongoose.Schema({
             return this.authProvider === 'local'; // Contact required only for local registration
         },
         trim: true,
+        match: [/^[0-9+\-\s()]+$/, 'Please enter a valid phone number'],
+        minlength: [10, 'Phone number must be at least 10 digits'],
+        maxlength: [15, 'Phone number cannot exceed 15 digits'],
+        validate: {
+            validator: function(v) {
+                // Remove all non-digit characters and check length
+                const digits = v.replace(/\D/g, '');
+                return digits.length >= 10 && digits.length <= 15;
+            },
+            message: 'Please enter a valid phone number'
+        }
     },
     wastebins: [{
         type: mongoose.Schema.Types.ObjectId,

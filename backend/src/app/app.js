@@ -11,7 +11,7 @@ const jobRouter = require('../routes/jobs/jobs');
 const empRouter = require('../routes/user/employee');
 const transaction = require('../routes/wastebin/wastebinTransaction');
 const oauthRouter = require('../routes/auth/oauth');
-
+const sanitizeRequest = require('../middleware/sanitization');
 
 const app = express();
 
@@ -35,6 +35,8 @@ app.use(cors({
     origin: CORS.CLIENT_URL,
     credentials: true // Allow credentials for session-based auth
 }));
+app.use(express.json());
+app.use(sanitizeRequest);
 
 //Waste Bin routes
 app.use('/api/wastebin', wasteBinRouter);

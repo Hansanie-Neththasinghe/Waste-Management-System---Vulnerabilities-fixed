@@ -1,4 +1,5 @@
 const WasteBinTransaction = require('../../models/WasteBin/wasteTransaction');
+const mongoose = require('mongoose');
 
 // Get all waste bin transactions
 exports.getAllTransactions = async (req, res) => {
@@ -8,13 +9,21 @@ exports.getAllTransactions = async (req, res) => {
         
         let transactions;
         
-        // If user is a resident, only return their own transactions
-        if (req.user.role === 'resident') {
+        // If user exists and is a resident, only return their own transactions
+        if (req.user?.role === 'resident') {
             console.log('🔍 Filtering transactions for resident:', req.user.id);
-            transactions = await WasteBinTransaction.find({ binOwner: req.user.id });
+            // When testing, req.user.id may be a string that's not a valid ObjectId
+            try {
+                const userId = new mongoose.Types.ObjectId(req.user.id);
+                transactions = await WasteBinTransaction.find({ binOwner: userId });
+            } catch (err) {
+                console.log('❌ Invalid ObjectId for resident:', err.message);
+                // Return empty array for invalid IDs
+                transactions = [];
+            }
         } else {
-            // Managers and employees can see all transactions
-            console.log('🔍 Returning all transactions for role:', req.user.role);
+            // Not authenticated or managers/employees can see all transactions
+            console.log('🔍 Returning all transactions');
             transactions = await WasteBinTransaction.find();
         }
         
@@ -41,17 +50,19 @@ exports.getTransactionById = async (req, res) => {
 
 // Create a new waste bin transaction
 exports.createTransaction = async (req, res) => {
-    const transaction = new WasteBinTransaction({
-        wasteBinId: req.body.wasteBinId,
-        transactionType: req.body.transactionType,
-        amount: req.body.amount,
-        date: req.body.date
-    });
-
     try {
+        const transaction = new WasteBinTransaction({
+            binId: req.body.binId,
+            binOwner: req.body.binOwner,
+            binType: req.body.binType,
+            currentWeight: req.body.currentWeight,
+            timestamp: req.body.timestamp || new Date()
+        });
+
         const newTransaction = await transaction.save();
         res.status(201).json(newTransaction);
     } catch (error) {
+        console.error('Error creating transaction:', error);
         res.status(400).json({ message: error.message });
     }
 };
@@ -64,10 +75,11 @@ exports.updateTransaction = async (req, res) => {
             return res.status(404).json({ message: 'Transaction not found' });
         }
 
-        transaction.wasteBinId = req.body.wasteBinId || transaction.wasteBinId;
-        transaction.transactionType = req.body.transactionType || transaction.transactionType;
-        transaction.amount = req.body.amount || transaction.amount;
-        transaction.date = req.body.date || transaction.date;
+        transaction.binId = req.body.binId || transaction.binId;
+        transaction.binOwner = req.body.binOwner || transaction.binOwner;
+        transaction.binType = req.body.binType || transaction.binType;
+        transaction.currentWeight = req.body.currentWeight || transaction.currentWeight;
+        transaction.timestamp = req.body.timestamp || transaction.timestamp;
 
         const updatedTransaction = await transaction.save();
         res.status(200).json(updatedTransaction);

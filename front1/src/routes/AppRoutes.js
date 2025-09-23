@@ -21,6 +21,8 @@ import ResidentHome from '../views/resident/ResidentHome';
 import ResidentProfile from '../views/resident/ResidentProfile';
 import ResidentJobCreate from '../views/resident/ResidentJobCreate';
 import ResidentReport from '../views/resident/ResidentReport';
+import OAuthSuccess from '../views/resident/OAuthSuccess';
+import OAuthError from '../views/resident/OAuthError';
 //Emp Components
 import EmpLogin from '../views/employee/empLogin';
 import EmpHome from '../views/employee/empHome';
@@ -49,6 +51,8 @@ const AppRoutes = () => {
         <Route path="/resident/profile" element={<ResidentProfile />} />
         <Route path="/resident/job" element={<ResidentJobCreate />} />
         <Route path="/resident/report" element={<ResidentReport />} />
+        <Route path="/oauth/success" element={<OAuthSuccess />} />
+        <Route path="/oauth/error" element={<OAuthError />} />
 
         <Route path="/employee" element={<EmpLogin />} />
         <Route path="/employee/home" element={<EmpHome />} />

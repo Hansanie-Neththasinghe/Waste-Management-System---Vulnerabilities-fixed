@@ -26,8 +26,11 @@ const mongoose = require('mongoose');
 const residentSchema = new mongoose.Schema({
     username: {
         type: String,
-        required: true,
+        required: function() {
+            return !this.googleId; // Username required only if not Google OAuth user
+        },
         unique: true,
+        sparse: true, // Allows multiple null values for Google OAuth users
         trim: true,
     },
     name: {
@@ -38,21 +41,45 @@ const residentSchema = new mongoose.Schema({
     email: {
         type: String,
         required: true,
-        // unique: true,
+        unique: true, // Email should be unique for both regular and OAuth users
         trim: true,
         lowercase: true,
     },
     password: {
         type: String,
-        required: true,
+        required: function() {
+            return !this.googleId; // Password required only if not Google OAuth user
+        },
+    },
+    // Google OAuth fields
+    googleId: {
+        type: String,
+        unique: true,
+        sparse: true, // Allows multiple null values for non-OAuth users
+    },
+    profilePicture: {
+        type: String, // URL to Google profile picture
+    },
+    emailVerified: {
+        type: Boolean,
+        default: false,
+    },
+    authProvider: {
+        type: String,
+        enum: ['local', 'google'],
+        default: 'local',
     },
     address: {
         type: String,
-        required: true,
+        required: function() {
+            return this.authProvider === 'local'; // Address required only for local registration
+        },
     },
     contactNumber: {
         type: String,
-        required: true,
+        required: function() {
+            return this.authProvider === 'local'; // Contact required only for local registration
+        },
         trim: true,
     },
     wastebins: [{
